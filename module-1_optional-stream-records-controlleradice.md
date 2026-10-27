@@ -4,15 +4,16 @@
 ## 📌 1. L'API Optional : En finir avec le `NullPointerException`
 Le repository renvoie un `Optional<T>` pour indiquer qu'une ressource est peut-être absente. Le service se charge de l'ouvrir ou de lever une exception métier si le résultat est vide.
 
-* **Anti-pattern à éviter :** Récupérer un `null` via un `orElse(null)` pour faire un `if (obj == null)` juste après.
+* **Anti-pattern à éviter :** Récupérer un `null` via un `orElse(null)` pour faire un `if (obj == null)` juste après :
 
-* ```java
-  Customer customer = customerRepository.findById(customerId).orElse(null);
+ ```java
+Customer customer = customerRepository.findById(customerId).orElse(null);
 
 if (customer == null) {
     throw new CustomerNotFoundException("Customer not found");
 }
-  ```
+```
+
 * **Bonne pratique :** Utiliser `.orElseThrow(...)` pour lever directement une exception métier en une seule ligne fluide.
 
 ```java
@@ -24,6 +25,10 @@ Customer customer = customerRepository.findById(customerId)
 ---
 
 ## 📌 2. Voyage et Hiérarchie des Exceptions dans Spring Boot
+
+### Pourquoi on lève des Exception ?
+
+Lever une exception, c'est poser un verrou de sécurité absolu pour empêcher ton application d'écrire des bêtises en base de données ou de corrompre l'état du système. C'est ce qu'on appelle le principe du *fail-fast* (échouer vite et fort dès qu'un problème survient).
 
 ### La Hiérarchie
 
@@ -63,6 +68,18 @@ public class GlobalExceptionHandler {
 
 ```
 
+### Qui a la responsabilité d'être conscient des exceptions ? Les services ou le handler ?
+
+La réponse est tranchée, et c'est la clé de voûte d'une architecture propre :
+
+* **Le Service** a la responsabilité exclusive de DÉTECTER et DÉCLARER l'erreur métier.
+
+  - Ce qu'il sait : Le service est le "cerveau" métier. C'est lui qui sait que "le solde est insuffisant" ou que "le client n'existe pas". Il prend la décision de jeter l'exception.
+
+  - Ce qu'il ignore totalement : Le service ne sait pas ce qu'est le Web, le HTTP, ou un statut 404/400. Il ne doit jamais importer de classes liées à HTTP. S'il est appelé depuis une application mobile, un script en ligne de commande ou une API Web, son code doit rester exactement le même.
+
+* **Le Handler (``@ControllerAdvice``)** a la responsabilité de TRADUIRE l'erreur pour le monde extérieur.
+
 ---
 
 ## 📌 4. Validation des DTOs & Interception des Erreurs de Formulaire
@@ -87,4 +104,19 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgument
 ```
 
 * **Résultat JSON envoyé au Front :** Un tableau propre associant chaque champ en erreur à son message explicatif.
+
+```json
+{
+  "errors": [
+    {
+      "field": "email",
+      "message": "ne doit pas être vide"
+    },
+    {
+      "field": "amount",
+      "message": "doit être supérieur à 0"
+    }
+  ]
+}
+```
 

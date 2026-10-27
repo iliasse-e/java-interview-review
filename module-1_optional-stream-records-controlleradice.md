@@ -1,13 +1,18 @@
 # 🚀 Module 1 : Java Moderne, Gestion des Erreurs & Architecture Spring Boot
 
-Ce document synthétise les fondations techniques indispensables validées dans le cadre de la mise à niveau backend pour affronter les entretiens techniques (Java 17/21, Spring Boot).
-
----
 
 ## 📌 1. L'API Optional : En finir avec le `NullPointerException`
 Le repository renvoie un `Optional<T>` pour indiquer qu'une ressource est peut-être absente. Le service se charge de l'ouvrir ou de lever une exception métier si le résultat est vide.
 
 * **Anti-pattern à éviter :** Récupérer un `null` via un `orElse(null)` pour faire un `if (obj == null)` juste après.
+
+* ```java
+  Customer customer = customerRepository.findById(customerId).orElse(null);
+
+if (customer == null) {
+    throw new CustomerNotFoundException("Customer not found");
+}
+  ```
 * **Bonne pratique :** Utiliser `.orElseThrow(...)` pour lever directement une exception métier en une seule ligne fluide.
 
 ```java

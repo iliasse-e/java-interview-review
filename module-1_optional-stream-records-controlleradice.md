@@ -120,3 +120,59 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgument
 }
 ```
 
+# La Streams API (Le convoyeur de données moderne)
+
+Avant Java 8, pour filtrer une liste, transformer ses objets et en récupérer une sous-liste, on écrivait des boucles `for` pleines de `if` et de listes temporaires. C'était verbeux, lourd et source de bugs.
+
+Un **Stream**, ce n'est ni une structure de données (ce n'est pas une liste), ni un espace de stockage. **C'est un convoyeur (une chaîne de montage) sur lequel circulent tes données.**
+
+### 1. L'anatomie d'un Stream en 3 temps
+
+Un pipeline de Stream respecte toujours la même structure :
+
+
+$$\text{Source} \rightarrow [\text{Opérations Intermédiaires}] \rightarrow \text{Opération Terminale}$$
+
+1. **La Source :** On transforme une Collection (comme une `List`) en flux avec `.stream()`.
+2. **Les Opérations Intermédiaires (Paresseuses) :** Ce sont les filtres et les transformateurs (ex: `.filter()`, `.map()`). Elles ne font **rien** tant que l'opération terminale n'est pas appelée. Elles renvoient un nouveau Stream.
+3. **L'Opération Terminale (Déclencheuse) :** C'est elle qui lance la machine et récolte le résultat (ex: `.toList()`, `.count()`, `.findFirst()`). Une fois exécutée, le Stream est consommé et ne peut plus être réutilisé.
+
+### 2. Le tiercé gagnant des méthodes indispensables :
+
+* **`.filter(predicate)`** : Ne garde que les éléments qui respectent une condition (ex: ne garder que les comptes dont le solde est $> 0$).
+* **`.map(function)`** : Transforme chaque élément du flux en un autre (ex: transformer une liste d'entités `BankAccount` en une liste de `BankAccountDTO`).
+* **`.toList()`** : (Java 16+) Ramasse tous les éléments filtrés/transformés pour en refaire une belle `List` immuable.
+
+
+#### Cas pratique
+
+```java
+    public List<BankAccountDTO> getActivatedAccounts() {
+        return this.bankAccountList()
+                .stream()
+                .filter(bankAccountDTO -> bankAccountDTO.getStatus() == AccountStatus.ACTIVATED)
+                .toList(); // Java 16+, si non c'était .collect(Collectors.toList());
+    }
+```
+
+---
+
+### 🎁 Les deux petits bonus syntaxiques demandés :
+
+1. **Les `Map.of(...)` :**
+C'est un raccourci moderne (introduit en Java 9) pour créer rapidement des petites Maps (clés/valeurs) sans s'embêter à faire des `new HashMap()` suivis de 10 lignes de `.put()`.
+* *Exemple :* `Map.of("status", "SUCCESS", "code", 200)`
+
+
+2. **Les méthodes de référence (`::`) :**
+C'est du sucre syntaxique pour alléger les lambdas. Quand une lambda se contente d'appeler une méthode existante, tu peux la remplacer par `::`.
+* *Lambda classique :* `customer -> customer.getName()`
+* *Méthode de référence :* `Customer::getName` (Ça se lit : *"appelle la méthode getName sur chaque objet Customer du flux"*).
+
+
+*La nuance subtile à garder en tête :*
+
+    `ObjetInstance::nomDeLaMethode` (comme `dtoMapper::fromBankAccount`) : On appelle une méthode sur un objet précis qui existe déjà en mémoire (ton `dtoMapper`).
+
+    `NomDeLaClasse::nomDeLaMethode` (comme `Integer::parseInt` ou `String::valueOf`) : On appelle une méthode statique (qui n'a pas besoin d'instance pour fonctionner).
+

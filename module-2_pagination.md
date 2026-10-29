@@ -98,6 +98,25 @@ Spring renvoie un JSON structuré comme ça :
 
 ---
 
+### Est ce que dans le cas du Page, on doit renvoyer une erreur si on a pas de données ? 
+
+Non, mais Spring renvoie ceci :
+
+```json
+{
+  "content": [],
+  "totalPages": 0,
+  "totalElements": 0,
+  "size": 10,
+  "number": 0,
+  "first": true,
+  "last": true,
+  "empty": true // c'est via cette prop qu'on peut réagir sur le front
+}
+```
+
+Pour une collection paginée, un résultat vide n'est jamais une erreur HTTP 404. On renvoie un 200 OK avec une page vide (`content: []`, `totalElements: 0`), car la ressource (la liste) existe, elle est simplement sans éléments à l'instant T. La 404 est réservée aux entités uniques introuvables par identifiant.
+
 ### 🧠 Question pour valider le cours :
 
 Si un développeur front-end t'appelle en disant : *"Dis donc, ton API de comptes me renvoie une `List<BankAccountDTO>` alors que j'ai besoin de savoir combien il y a de pages en total pour afficher mes boutons de pagination"*, **qu'est-ce que tu dois modifier dans ton code backend (du Controller jusqu'au Repository) pour résoudre son problème ?**

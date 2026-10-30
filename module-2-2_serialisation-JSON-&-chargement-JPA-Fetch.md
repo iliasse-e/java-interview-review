@@ -27,6 +27,7 @@ Table [customer]                     Table [bank_account]
 +----+--------+                      +---------+------------+-------------+
 |  1 | Hassan | <--- (Clé étrangère) | "ACC-1" |    5000    |      1      |
 +----+--------+                      +---------+------------+-------------+
+
 ```
 
 ### Le drame en mémoire Java
@@ -47,7 +48,7 @@ Le sérialiseur JSON (**Jackson**) entre en action :
 
 *Illustration du modèle Java :*
 
-````plaintext
+```plaintext
 [ Objet Java: Customer (Hassan) ]
    ├── id: 1
    ├── name: "Hassan"

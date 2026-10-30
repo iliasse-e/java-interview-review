@@ -15,6 +15,9 @@
 
 * **Ton point noir identifié :** Les relations entre entités et le SQL sous-jacent.
 * **Le programme de la semaine :**
+* Rappel sur la pagination (`Page` & `Pageable`).
+* @JSONIgnore de Jackson et le role d'une DTO.
+* Le role de FETCH.Lazy vs FETCH.Eager.
 * Démystifier une bonne fois pour toutes les relations : `@OneToMany`, `@ManyToOne`, `@ManyToMany` (comment ça se traduit en clés étrangères en base, le rôle du `mappedBy`, et surtout le piège de la cascade `CascadeType.ALL` vs suppression).
 * **Le problème du N+1 :** Comprendre pourquoi Hibernate génère 50 requêtes SQL là où tu en voulais une seule, et comment le résoudre (`JOIN FETCH`, entités graph).
 * Introduction au **Pattern Strategy** (que tu as mentionné) appliqué à la logique métier pour éviter les services monstres remplis de `if/else`.

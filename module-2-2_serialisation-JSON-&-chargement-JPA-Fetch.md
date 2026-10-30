@@ -17,6 +17,18 @@ En base de données relationnelle, une table `bank_account` contient simplement 
 * La table `customer` ne contient pas physiquement les comptes à l'intérieur d'elle-même.
 * **Résultat :** En SQL, une boucle infinie est mathématiquement impossible.
 
+
+*Illustration du modèle SQL :*
+
+```plaintext
+Table [customer]                     Table [bank_account]
++----+--------+                      +---------+------------+-------------+
+| id | name   |                      | id      | balance    | customer_id |
++----+--------+                      +---------+------------+-------------+
+|  1 | Hassan | <--- (Clé étrangère) | "ACC-1" |    5000    |      1      |
++----+--------+                      +---------+------------+-------------+
+```
+
 ### Le drame en mémoire Java
 
 En revanche, dans le monde objet de Java, Hibernate recrée de vrais **liens en mémoire (des pointeurs d'objets)** :
@@ -31,6 +43,25 @@ Le sérialiseur JSON (**Jackson**) entre en action :
 2. À l'intérieur de `ACC-1`, il voit le champ `customer` et se dit : *"Ah, il faut que je re-sérialise Hassan !"*.
 3. Il re-sérialise Hassan, qui a des comptes, qui renvoient à Hassan...
 4. **Boucle infinie ➡️ `StackOverflowError**` (la mémoire Java explose).
+
+
+*Illustration du modèle Java :*
+
+````plaintext
+[ Objet Java: Customer (Hassan) ]
+   ├── id: 1
+   ├── name: "Hassan"
+   └── accounts: [ 
+         --------------------------------------------------
+         | [ Objet Java: BankAccount (ACC-1) ]            |
+         |   ├── id: "ACC-1"                              |
+         |   └── customer: ---------------------------    |
+         |         (Il pointe vers le client Hassan !)  | |
+         -------------------------------------------------- |
+                   ▲                                        |
+                   |________________________________________|
+                   (Et ce compte renvoie vers Hassan, qui renvoie vers le compte...)
+```
 
 ### Comment contrer ce piège ?
 

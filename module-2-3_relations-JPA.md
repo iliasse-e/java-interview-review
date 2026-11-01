@@ -160,8 +160,7 @@ C'est magique : Hibernate lit ton `@ManyToOne` en Java, traduit ça par cette re
 
 ---
 
-
-
+## Base de donnée : Avec et sans `mappedBy`
 ---
 
 ### 1. Avec `mappedBy` (La relation propre et maîtrisée)
@@ -220,7 +219,7 @@ Le `mappedBy` n'est pas qu'un simple mot-clé cosmétique en Java : il dit à Hi
 
 ---
 
-### Requêtes SQL : Avec et sans `mappedBy`
+## Requêtes SQL : Avec et sans `mappedBy`
 
 
 Voici concrètement ce qu’Hibernate génère en SQL dans les deux cas, lorsque tu souhaites **récupérer un client et tous ses comptes associés** (par exemple lors d’un `findById` ou d’un chargement complet).
@@ -294,17 +293,3 @@ Hibernate va faire ton `INSERT` dans `bank_account`, **ET** il va en plus exécu
 ---
 
 
-## 2. Le piège de la cascade (`CascadeType.ALL` vs Suppression)
-
-C'est un classique des questions pièges en entretien.
-Imaginons que tu supprimes un client (`customerRepository.delete(customer)`). Que se passe-t-che en base de données pour ses comptes bancaires ?
-
-* **Sans Cascade :** Si tu tentes de supprimer le client, la base de données va refuser (ou lever une erreur de contrainte d'intégrité SQL) car des comptes pointent encore vers lui (`customer_id` est bloqué par une clé étrangère).
-* **Avec `CascadeType.ALL` (ou `CascadeType.REMOVE`) :** Tu dis à JPA : *"Si je supprime le client, supprime aussi automatiquement tous ses comptes associés en cascade."*
-* **Le danger :** Si tu fais un `customerService.deleteCustomer(id)` par erreur ou sans réfléchir, tu effaces d'un coup sec tous les comptes et potentiellement tout l'historique financier lié. En entreprise, sur des données sensibles (comme la banque ou l'e-commerce), on évite le `CascadeType.ALL` aveugle sur les suppressions, ou on gère ça proprement par des règles métiers.
-
----
-
-### 🧠 Question pour vérifier ton ancrage :
-
-Dans ton `e-banking-backend`, est-ce que tu as configuré des cascades ou des `mappedBy` sur tes entités `Customer` et `BankAccount` ? Si tu devais expliquer à un collègue pourquoi on met `mappedBy`, tu lui dirais quoi en une phrase ?

@@ -24,6 +24,73 @@ Table [customer]                      Table [bank_account]
 
 ---
 
+
+## 2. La relation One-to-One (1-1) : L'exclusivité
+
+### Le cas d'usage :
+
+Imaginons un **`Customer`** et son **`CustomerProfile`** (les informations détaillées de profil, comme une bio, une photo et des préférences). Un client possède un et un seul profil, et un profil appartient à un et un seul client.
+
+### 🛠️ Comment ça se matérialise en SQL ?
+
+En SQL, une relation 1-1 se gère en plaçant une **clé étrangère (`FOREIGN KEY`) unique** dans l'une des deux tables (généralement du côté de la table dépendante). Pour garantir qu'un même profil ne soit pas partagé par plusieurs clients, on ajoute une contrainte **`UNIQUE`** sur cette clé étrangère.
+
+```text
+Table [customer]                     Table [customer_profile]
++----+--------+                      +----+------------------+-------------+
+| id | name   |                      | id | bio              | customer_id | ---> FK + UNIQUE
++----+--------+                      +----+------------------+-------------+
+|  1 | Hassan | <=================== | 10 | "Développeur..." |      1      |
++----+--------+                      +----+------------------+-------------+
+
+```
+
+* **Le piège JPA :** C'est le côté qui porte la clé étrangère (`customer_profile`) qui est le "propriétaire" de la relation. L'autre côté utilisera `mappedBy = "customer"`, exactement comme pour le `OneToMany`.
+
+---
+
+## 3. La relation Many-to-Many (N-N) : Le club des multiples
+
+### Le cas d'usage :
+
+Imaginons des **`Student`** (Étudiants) et des **`Course`** (Cours). Un étudiant peut suivre plusieurs cours, et un cours contient plusieurs étudiants.
+
+### 🛠️ Comment ça se matérialise en SQL ?
+
+Une relation N-N est **impossible à stocker directement** dans deux tables simples, car une colonne ne peut pas contenir plusieurs valeurs à la fois (on ne peut pas mettre une liste d'IDs dans une seule case SQL).
+
+La solution universelle en SGBD relationnel, c'est de créer une **Table de Jonction (Join Table)** intermédiaire. Cette table ne contient que des paires de clés étrangères :
+
+```text
+Table [student]                    Table [enrollment] (Table de jonction)      Table [course]
++----+---------+                   +------------+-----------+                   +----+---------------+
+| id | name    |                   | student_id | course_id |                   | id | title         |
++----+---------+                   +------------+-----------+                   +----+---------------+
+|  1 | Hassan  | <---------------> |     1      |    101    | <---------------- |101 | Spring Boot   |
+|  2 | Yassine | <---------------> |     2      |    101    |                   |102 | Angular Avancé|
++----+---------+                   +------------+-----------+                   +----+---------------+
+
+```
+
+* **Ce qui se passe en SQL :**
+Pour savoir quels cours suit Hassan, le SGBD fait une double jointure : il part de `student`, passe par la table de jonction `enrollment`, et arrive sur `course`.
+* **Côté Java (JPA) :**
+C'est ici qu'intervient l'annotation `@ManyToMany` accompagnée d'un `@JoinTable` pour configurer le nom de cette table de jonction intermédiaire.
+
+---
+
+### 📊 Tableau Récapitulatif pour tes Entretiens
+
+| Type de Relation | Traduction SQL physique | Élément clé en base |
+| --- | --- | --- |
+| **`Many-to-One` / `One-to-Many**` | 2 tables | Une **clé étrangère** dans la table "Many". |
+| **`One-to-One`** | 2 tables | Une **clé étrangère unique (`UNIQUE`)** dans l'une des tables. |
+| **`Many-to-Many`** | **3 tables** | Une **table de jonction** dédiée qui porte deux clés étrangères. |
+
+---
+
+
+
 ### ☕ Côté Java (JPA) : Le rôle mystère de `mappedBy`
 
 Puisque le monde Java est bidirectionnel (le client a une liste de comptes, et le compte a un client), il faut dire à Hibernate comment relier ces deux entités sans créer de doublon en base. C'est là qu'intervient **`mappedBy`**.

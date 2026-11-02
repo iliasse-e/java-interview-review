@@ -1,6 +1,8 @@
 
 ### 🔥 Plan Commando (3 Semaines - Accélération & Hardcore)
 
+Ce cours utilise le dépot [E BANKING](https://github.com/iliasse-e/e-banking-backend) pour illustrer des cas concrets.
+
 #### **Semaine 1 (1 à 2 jours max) : Java Moderne & Le socle Spring Boot**
 
 * **Ce qu'on survole rapidement (puisque tu connais) :** L'IoC, l'injection par constructeur, les controllers REST de base.

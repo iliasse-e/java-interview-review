@@ -46,3 +46,29 @@ public class Customer {
 * Si tu retires un compte de la liste Java d'un client (`customer.getBankAccounts().remove(account)`) et que tu sauves le client, Hibernate comprend que ce compte est devenu un "orphelin" et va **le supprimer automatiquement de la base de données**.
 
 
+### L’impact de la Cascade sur l’insertion en mémoire (et ses limites métier)
+
+L'utilisation de la cascade (`CascadeType.ALL` ou `PERSIST`) couplée à `orphanRemoval = true` transforme la façon dont on manipule les entités en Java. Plutôt que de multiplier les appels aux services de chaque sous-entité, il devient possible d'instancier un arbre d'objets complet en mémoire :
+
+```java
+// On crée un client et on lui ajoute des comptes directement en mémoire
+Customer customer = new Customer();
+customer.setName("Hassan");
+customer.getBankAccounts().add(new BankAccount("ACC-1"));
+customer.getBankAccounts().add(new BankAccount("ACC-2"));
+
+// Un seul save() balance tout en base de données d'un bloc
+customerRepository.save(customer);
+```
+
+#### Les limites de cette pratique
+
+1. **L'inadéquation avec la réalité fonctionnelle** : Dans de nombreux domaines (comme le secteur bancaire ou l'e-commerce), les entités filles ne sont pas créées en même temps que le parent.
+
+2. **Le risque destructif des suppressions en chaîne** : Si la cascade inclut la suppression (`CascadeType.REMOVE`), la suppression par erreur d'un objet parent entraîne l'effacement automatique et irréversible de toute la hiérarchie en cascade, contournant les sécurités comptables et l'historique d'audit indispensables.
+
+
+### 💡 Le conseil "Architecture Bancaire" :
+
+Dans une vraie application financière, on ne supprime **jamais** physiquement un compte ou des opérations (pour des raisons d'audit et de traçabilité légale). On utilise plutôt un champ de type `status` (ex: `SUSPENDED` ou `CLOSED`), ou on bloque la suppression dans le service pour empêcher l'effacement de données comptables.
+

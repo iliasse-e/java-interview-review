@@ -90,6 +90,9 @@ List<Customer> findAll();
 
 ```
 
+Le paramètre `attributePaths` sert à indiquer explicitement à Hibernate :
+« Pour cette requête spécifique, les attributs listés ici (qui sont par défaut en mode `LAZY`) doivent être chargés immédiatement en une seule fois (en mode `EAGER` temporaire). »
+
 Hibernate comprend qu'il doit charger la liste des comptes en même temps que les clients.
 
 ---

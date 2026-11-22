@@ -53,3 +53,73 @@ Dans Spring Security, l'ordre d'exécution compte énormément :
 
 * Les filtres qui **authentifient** (qui lisent un token ou des identifiants et remplissent le `SecurityContext`) doivent s'exécuter **avant** les filtres qui **autorisent** (qui vérifient si l'utilisateur a le droit d'accéder à la route).
 * C'est pour cette raison qu'avec des filtres custom on utilise des méthodes comme `addFilterBefore(..., UsernamePasswordAuthenticationFilter.class)` ou `addFilterAfter(...)` : pour placer le filtre au bon endroit dans la séquence.
+
+
+### C'est quoi `@Order(1)` et `@Order(2)` ?
+
+Quand tu déclares **plusieurs beans `SecurityFilterChain**` dans une application Spring Boot, Spring doit savoir **dans quel ordre les évaluer** pour chaque requête HTTP entrante.
+
+* `@Order(...)` donne une priorité numérique : **plus le chiffre est petit, plus la priorité est haute** (`@Order(1)` passe avant `@Order(2)`).
+* Spring Security prend la **première** `SecurityFilterChain` dont la condition (`securityMatcher(...)`) correspond à l'URL de la requête, puis ignore les suivantes pour cette requête.
+* Si tu oublies `@Order(...)` sur plusieurs chaînes, l'ordre de chargement des beans n'est pas garanti de façon explicite : une chaîne trop large (ex: `anyRequest()`) pourrait intercepter des routes avant une chaîne plus spécifique.
+
+---
+
+### Exemple de deux `SecurityFilterChain` distinctes
+
+Imagine une application qui expose :
+
+1. Une **API REST** (`/api/**`) consommée par un client Angular en mode **stateless** (sans session HTTP, protégée par JWT / Bearer token).
+2. Des **routes d'administration ou de monitoring** (`/admin/**`) avec une autre politique (par exemple un accès restreint ou une configuration séparée).
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class MultiSecurityConfig {
+
+    // 1. Chaîne prioritaire pour l'API REST stateless
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/**")
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+
+    // 2. Chaîne de repli pour le reste de l'application
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+
+```
+
+* Si une requête arrive sur `/api/accounts`, `@Order(1)` matche `/api/**` et applique la chaîne **stateless**.
+* Si une requête arrive sur `/admin/users`, `@Order(1)` ne matche pas, Spring passe donc à `@Order(2)` et applique la seconde chaîne.
